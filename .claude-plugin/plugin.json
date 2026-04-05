@@ -9,5 +9,12 @@
   "homepage": "https://github.com/easyfan/skill-test",
   "repository": "https://github.com/easyfan/skill-test",
   "license": "MIT",
-  "keywords": ["testing", "pipeline", "skill", "eval", "looper", "quality"]
+  "keywords": [
+    "testing",
+    "pipeline",
+    "skill",
+    "eval",
+    "looper",
+    "quality"
+  ]
 }

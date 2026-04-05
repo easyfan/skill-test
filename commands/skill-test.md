@@ -1,0 +1,4 @@
+---
+description: 'Full testing pipeline coordinator for skills, agents, and patterns. Orchestrates the three-phase quality pipeline: static review (skill-review/pattern-review) → behavioral eval (skill-creator eval loop) → deployment verification (looper). Use this skill whenever someone asks to test, validate, or run the full quality pipeline for a skill, agent, or pattern file — including when they say 「run the test pipeline」, 「validate this skill end-to-end」, 「测试这个 skill」, 「跑流水线」, or asks which testing stages are needed. Also triggers when someone asks about resuming a pipeline with --from-stage or handling looper failure. Do NOT trigger for single-stage review requests (use skill-review directly) or deployment-only checks (use looper directly).'
+allowed-tools: ["Bash", "Read", "Write", "Edit", "Grep", "Glob", "Agent", "Task"]
+---

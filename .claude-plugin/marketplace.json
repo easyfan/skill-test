@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "skill-test",
-      "description": "1 skill (/skill-test). Orchestrates a 5+1 stage pipeline (Triage → static review → behavioral eval → regression → looper) for skills/agents, and a 7+1 stage pipeline for patterns. Supports --from-stage for resuming mid-pipeline.",
+      "description": "1 command + 1 skill (/skill-test). Orchestrates a 5+1 stage pipeline (Triage → static review → behavioral eval → regression → looper) for skills/agents, and a 7+1 stage pipeline for patterns. Supports --from-stage for resuming mid-pipeline.",
       "category": "workflow",
       "source": {
         "source": "url",

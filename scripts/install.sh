@@ -25,6 +25,8 @@ done
 
 SKILL_SRC="skills/skill-test"
 SKILL_DST="skills/skill-test"
+CMD_SRC="commands/skill-test.md"
+CMD_DST="commands/skill-test.md"
 
 # ── Uninstall ──────────────────────────────────────────────────────────────────
 if [ "$UNINSTALL" = true ]; then
@@ -37,6 +39,15 @@ if [ "$UNINSTALL" = true ]; then
       rm -rf "$skill_dst"
     fi
     echo "  Removed $skill_dst"
+  fi
+  cmd_dst="$CLAUDE_DIR/$CMD_DST"
+  if [ -f "$cmd_dst" ]; then
+    if $DRY_RUN; then
+      echo "[dry-run] rm $cmd_dst"
+    else
+      rm "$cmd_dst"
+    fi
+    echo "  Removed $cmd_dst"
   fi
   echo "Uninstall complete."
   exit 0
@@ -64,6 +75,27 @@ if $need_copy; then
   else
     mkdir -p "$skill_dst"
     cp -r "$skill_src/." "$skill_dst/"
+  fi
+  MODIFIED=$((MODIFIED + 1))
+fi
+
+# Install command entry point (commands/skill-test.md)
+cmd_src="$PLUGIN_DIR/$CMD_SRC"
+cmd_dst="$CLAUDE_DIR/$CMD_DST"
+
+need_cmd=false
+if [ ! -f "$cmd_dst" ]; then
+  need_cmd=true
+elif ! diff -q "$cmd_src" "$cmd_dst" &>/dev/null; then
+  need_cmd=true
+fi
+
+if $need_cmd; then
+  if $DRY_RUN; then
+    echo "[dry-run] cp $cmd_src $cmd_dst"
+  else
+    mkdir -p "$(dirname "$cmd_dst")"
+    cp "$cmd_src" "$cmd_dst"
   fi
   MODIFIED=$((MODIFIED + 1))
 fi

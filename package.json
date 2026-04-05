@@ -15,6 +15,7 @@
   "keywords": ["claude-code", "skill", "testing", "pipeline", "eval", "looper", "quality"],
   "pluginDistribution": false,
   "files": [
+    "commands/",
     "skills/",
     "references/",
     "scripts/",
