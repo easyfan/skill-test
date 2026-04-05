@@ -1,6 +1,6 @@
 ---
 name: skill-test
-description: Full testing pipeline coordinator for skills, agents, and patterns. Orchestrates the three-phase quality pipeline: static review (skill-review/pattern-review) → behavioral eval (skill-creator eval loop) → deployment verification (looper). Use this skill whenever someone asks to test, validate, or run the full quality pipeline for a skill, agent, or pattern file — including when they say "run the test pipeline", "validate this skill end-to-end", "测试这个 skill", "跑流水线", or asks which testing stages are needed. Also triggers when someone asks about resuming a pipeline with --from-stage or handling looper failure.
+description: "Full testing pipeline coordinator for skills, agents, and patterns. Orchestrates the three-phase quality pipeline: static review (skill-review/pattern-review) → behavioral eval (skill-creator eval loop) → deployment verification (looper). Use this skill whenever someone asks to test, validate, or run the full quality pipeline for a skill, agent, or pattern file — including when they say \"run the test pipeline\", \"validate this skill end-to-end\", \"测试这个 skill\", \"跑流水线\", or asks which testing stages are needed. Also triggers when someone asks about resuming a pipeline with --from-stage or handling looper failure. Do NOT trigger for single-stage review requests (use skill-review directly) or deployment-only checks (use looper directly)."
 ---
 
 # Skill Test — Testing Pipeline Coordinator
@@ -40,11 +40,31 @@ Design principles:
 
 **Step 0a: Parse arguments**
 
+If no arguments are provided, output usage reminder and halt:
 ```
+Usage: /skill-test [--from-stage N] <target>
+       /skill-test [--from-stage N] --pattern <name>
+       /skill-test --dry-run [--from-stage N] <target>
+```
+
+```
+If --dry-run is present           → DRY_RUN=true (resolve tools, validate target, print stage plan, then exit without executing stages)
 If --pattern <name> is present    → TARGET_TYPE=pattern, TARGET_NAME=<name>
 If --from-stage N is present      → FROM_STAGE=N (default: 1)
 Otherwise                         → TARGET_TYPE=skill, TARGET_PATH=<target>
 ```
+
+If TARGET_PATH is set (skill/agent path), check subtype:
+```
+If TARGET_PATH is under agents/   → TARGET_SUBTYPE=agent
+Otherwise                         → TARGET_SUBTYPE=skill
+```
+
+After parsing, validate FROM_STAGE if set:
+- Skill/Agent path valid stages: {0.5, 1, 2, 3, 4, 5}
+- Pattern path valid stages: {0.5, 1, 2, 3, 4, 5, 6, 7}
+- If FROM_STAGE is not in the valid set → halt: "Error: --from-stage N is out of range. Valid values: {list}"
+- Note: --from-stage 1 begins at Stage 1 (Stage 0.5 doc lint is skipped)
 
 **Step 0b: Resolve tool paths (priority: project-level > user-level > demo)**
 
@@ -54,6 +74,9 @@ Locate the following tool command files:
 # skill-review
 SKILL_REVIEW_CMD="$(ls ~/.claude/commands/skill-review.md 2>/dev/null || \
                     ls /workspace/demo/commands/skill-review.md 2>/dev/null)"
+
+# skill-creator (optional; used in Stage 3 behavioral eval)
+SKILL_CREATOR_CMD="$(ls ~/.claude/skills/skill-creator/SKILL.md 2>/dev/null)"
 
 # pattern-review (pattern path only)
 PATTERN_REVIEW_CMD="$(ls ~/.claude/commands/pattern-review.md 2>/dev/null || \
@@ -67,7 +90,27 @@ fi
 LINT_SCRIPT="$(pwd)/packer/skill-test/scripts/lint-docs.sh"
 ```
 
-If skill-review is not available, halt and prompt the user to install it.
+If skill-review is not available, halt:
+```
+⛔ skill-review is required but not installed.
+Install via: /plugin marketplace add skill-review → then retry
+```
+
+If TARGET_TYPE=skill and TARGET_PATH is set, verify file existence:
+```
+If TARGET_PATH does not exist → halt: "Error: target file not found: <TARGET_PATH>"
+```
+
+If SKILL_CREATOR_CMD is not found, note the skip path:
+```
+⚠️ skill-creator not installed — Stage 3 behavioral eval will be flagged as 'skipped (skill-creator not installed)' and pipeline will proceed to Stage 4.
+```
+
+If TARGET_TYPE=pattern and PATTERN_REVIEW_CMD is not found, halt:
+```
+⛔ pattern-review is required for pattern path but is not installed.
+Install via: /plugin marketplace add pattern-review → then retry
+```
 
 **Step 0c: Initialize state directory**
 
@@ -78,18 +121,47 @@ mkdir -p "$SCRATCH_DIR"
 STATE_FILE="$SCRATCH_DIR/pipeline_state.json"
 ```
 
-If `$STATE_FILE` already exists and `--from-stage` was not specified, read the previous progress and ask the user whether to resume.
+If `$STATE_FILE` already exists and `--from-stage` was not specified, read the previous progress and present resume prompt:
+
+```
+📂 Found existing pipeline state for: <previous_target>
+   Last stage completed: <N> | Status: <status>
+   Started at: <started_at>
+
+   [WARNING] Target mismatch detected — state is for <previous_target>, current target is <current_target>.
+   (omit the warning line if targets match)
+
+Resume from stage <N+1>? (yes = resume / no = start fresh from stage 1)
+```
+
+If yes → set FROM_STAGE=<N+1>, use existing state. If no → delete state and start from stage 1.
+
+If `--from-stage N` is used and no state file exists for this target, emit:
+```
+⚠️ No prior state file found for this target. Stages 1 through <N-1> will be assumed complete.
+```
+
+If `--from-stage N` is set and the state file records a prior stage as "blocked", warn before proceeding:
+```
+⚠️ Stage <M> previously recorded as 'blocked'. Proceeding from stage <N> may skip unresolved issues.
+Proceed anyway? (yes/no)
+```
 
 Print pipeline banner:
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🧪 Skill Test Pipeline
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Target: <TARGET>
-Type:   <skill/agent | pattern>
-Start:  stage <FROM_STAGE>
+Target:  <TARGET>
+Type:    <skill | agent | pattern>
+Subtype: <skill | agent>  (skill/agent path only)
+Start:   stage <FROM_STAGE>
+DryRun:  <yes | no>
+Estimated cost: ~$1-3 (skill/agent path) | ~$3-8 (pattern path)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+If DRY_RUN=true, after printing the banner and resolving tool paths, print stage plan (tools involved per stage) and exit without executing any stages.
 
 ---
 
@@ -110,6 +182,7 @@ After each stage completes, update `$STATE_FILE`:
 
 ```json
 {
+  "schema_version": "1",
   "target": "<path or name>",
   "target_type": "skill|pattern",
   "started_at": "<ISO datetime>",
@@ -121,6 +194,8 @@ After each stage completes, update `$STATE_FILE`:
   }
 }
 ```
+
+Note: Write state atomically (write to a `.tmp` file then rename) to avoid partial-write corruption. The `schema_version` field enables forward compatibility.
 
 ---
 
@@ -150,6 +225,7 @@ Failure analysis:
   • Clean CC integration break  → eval stage may not cover integration scenarios; add eval cases
 
 Recommended: /skill-test --from-stage <eval-stage> <target>
+  (skill/agent path: <eval-stage>=3; pattern path: <eval-stage>=5)
 ```
 
 ---

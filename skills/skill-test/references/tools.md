@@ -80,6 +80,27 @@ For plugin skill targets (located under plugins/), the skill path format passed 
 Skill path: <absolute_path>/<skill-name>/
 ```
 
+**Concrete invocation template** (follow the skill-creator instructions to run eval):
+
+```
+Follow the instructions in $SKILL_CREATOR_CMD to run eval for skill at <TARGET_PATH>.
+
+Steps:
+1. Read evals/evals.json at the skill directory — require ≥3 test cases
+2. Spawn with_skill and without_skill (or old_skill) as parallel subagent runs
+3. Wait for all runs to complete
+4. Grade results: count pass/fail per case, compute pass rate
+5. Run: python3 generate_review.py --static   (if available)
+6. Present graded results to user and wait for feedback
+7. If pass rate < target: suggest targeted improvements, then EVAL_ROUND++
+```
+
+If SKILL_CREATOR_CMD is not found:
+```
+Print: ⏭️ Stage 3 skipped — skill-creator not installed.
+       Install via: /plugin marketplace add skill-creator → then retry
+```
+
 ---
 
 ## looper Invocation
@@ -98,14 +119,16 @@ looper typically checks:
 ## State File Read/Write
 
 ```bash
-# Write stage state
+# Write stage state (atomic: write to .tmp then rename to avoid partial-write corruption)
 python3 -c "
 import json, os
 f = os.environ.get('STATE_FILE')
 state = json.load(open(f)) if os.path.exists(f) else {}
 state.setdefault('stages', {})['<N>'] = {'status': 'completed', 'result': 'pass'}
 state['current_stage'] = <N>
-json.dump(state, open(f, 'w'), ensure_ascii=False, indent=2)
+tmp = f + '.tmp'
+json.dump(state, open(tmp, 'w'), ensure_ascii=False, indent=2)
+os.replace(tmp, f)
 "
 
 # Read stage state

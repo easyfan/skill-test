@@ -61,6 +61,7 @@ bash packer/skill-test/scripts/lint-docs.sh <PKG_DIR>
 Checks are identical to skill-pipeline.md Stage 0.5 (L1–L6).
 
 **Result**: FAIL does not block pipeline; continue to stage 1, flag ⚠️ in final summary.
+On FAIL: immediately print `⚠️ Stage 0.5 Doc Lint: N issue(s) found (non-blocking — pipeline continues)` then list issues.
 
 **Write state**:
 ```json
@@ -70,6 +71,8 @@ Checks are identical to skill-pipeline.md Stage 0.5 (L1–L6).
 ---
 
 ## Stage 1: Triage Gate
+
+Print: `▶ Stage 1 — Triage Gate…`
 
 **Goal**: Quickly filter structural issues in the pattern template (missing required sections, unfilled placeholders, file too short).
 
@@ -86,6 +89,8 @@ Triage checks pattern-specific items:
 - No unfilled placeholders
 
 **Result** (same as skill path — 🔴 pauses pipeline).
+- Pass → print `✅ Stage 1 passed`
+- Blocked → print `⛔ Stage 1 blocked`
 
 **Write state**:
 ```json
@@ -95,6 +100,8 @@ Triage checks pattern-specific items:
 ---
 
 ## Stage 2: Full Template Static Review (run-loop)
+
+Print: `▶ Stage 2 — Full Template Static Review…`
 
 **Goal**: Use the pattern committee to review template design quality (completeness, instantiability, internal consistency, external benchmarking).
 
@@ -107,6 +114,7 @@ Follow the instructions in $PATTERN_REVIEW_CMD, reviewing pattern <PATTERN_NAME>
 Round 1: full mode (with P4 researcher). Subsequent rounds: `--regression` (P1+P2, skip P3/P4).
 
 **Loop control** (same as skill path — ≤3 rounds, exit when finding count reaches zero).
+After convergence: print `✅ Stage 2 passed`. If max rounds reached with findings remaining: print `⚠️ Stage 2 warned (max rounds reached)`.
 
 **Critical finding rollback**: if P2 (instantiability) has 🔴, it must be fixed before stage 3. Missing `generated-from` is a typical P2 blocker.
 
@@ -118,6 +126,8 @@ Round 1: full mode (with P4 researcher). Subsequent rounds: `--regression` (P1+P
 ---
 
 ## Stage 3: Project-Level Settle-Down
+
+Print: `▶ Stage 3 — Project-Level Settle-Down…`
 
 **Goal**: Instantiate the pattern in the target project, producing real command/agent files. This step verifies that "the template can be executed."
 
@@ -137,6 +147,8 @@ Output file path is typically: `<PROJECT>/.claude/commands/<PATTERN_NAME>.md` (o
 
 If `generated-from` is missing, the pattern file does not self-document its instantiation convention → roll back to stage 2 to fix the pattern, then re-run settle-down.
 
+On success: print `✅ Stage 3 passed`.
+
 **Write state**:
 ```json
 "3": {"status": "completed", "instance_path": "<path>", "generated_from_present": true}
@@ -145,6 +157,8 @@ If `generated-from` is missing, the pattern file does not self-document its inst
 ---
 
 ## Stage 4: Instance Static Bridge Verification
+
+Print: `▶ Stage 4 — Instance Static Bridge Verification…`
 
 **Goal**: Verify "landing quality" of the template — does the instantiated output meet skill review standards? Defects found must be **rolled back to the pattern layer** rather than only fixed in the instance file.
 
@@ -155,8 +169,8 @@ Follow the instructions in $SKILL_REVIEW_CMD, reviewing <INSTANCE_PATH> in --reg
 ```
 
 **Rollback logic**:
-- 🔴 found → analyze root cause (pattern template issue vs settle-down output issue) → roll back to stage 2 to fix template, then re-run settle-down (stage 3)
-- Zero findings → proceed to stage 5
+- 🔴 found → print `⛔ Stage 4 blocked`, analyze root cause (pattern template issue vs settle-down output issue) → roll back to stage 2 to fix template, then re-run settle-down (stage 3)
+- Zero findings → print `✅ Stage 4 passed`, proceed to stage 5
 
 **Write state**:
 ```json
@@ -167,11 +181,15 @@ Follow the instructions in $SKILL_REVIEW_CMD, reviewing <INSTANCE_PATH> in --reg
 
 ## Stage 5: Behavioral Eval Main Loop
 
+Print: `▶ Stage 5 — Behavioral Eval…`
+
 **Goal**: Test the behavior of the instantiated output under real user prompts. Identical to stage 3 in skill-pipeline.md.
 
 The eval test subject is the **instance file** (`<INSTANCE_PATH>`), not the pattern template file.
 
-Operations and loop control are the same as skill-pipeline.md stage 3.
+Operations and loop control are the same as skill-pipeline.md stage 3. Require minimum 3 eval cases; warn (non-blocking) if no negative or near-miss case is present.
+
+On success: print `✅ Stage 5 passed`. On max rounds: print `⚠️ Stage 5 warned (max rounds)`.
 
 **Write state**:
 ```json
@@ -182,7 +200,9 @@ Operations and loop control are the same as skill-pipeline.md stage 3.
 
 ## Stage 6: Regression Static Re-check
 
-Same as skill-pipeline.md stage 4. The review subject is the instance file `<INSTANCE_PATH>`.
+Print: `▶ Stage 6 — Regression Static Re-check…`
+
+Same as skill-pipeline.md stage 4. The review subject is the instance file `<INSTANCE_PATH>`. On pass: print `✅ Stage 6 passed`. If findings present: print `⚠️ Stage 6 warned`.
 
 **Write state**:
 ```json
@@ -193,12 +213,18 @@ Same as skill-pipeline.md stage 4. The review subject is the instance file `<INS
 
 ## Stage 7: Looper Deployment Verification
 
+Print: `▶ Stage 7 — Looper Deployment Verification…`
+
 Same as the complete logic in skill-pipeline.md stage 5, including:
 - Path A (bare pattern file): single `--command` run
 - Path B (packer package): `--plugin` (install.sh) + `--command` (manual cp) dual run
 - plugin marketplace / npx noted as "requires live environment, not tested"
 
-Failure handling: roll back to stage 5 (eval stage), do not re-run looper.
+Failure handling: roll back to stage 5 (eval stage), do not re-run looper. Print `⛔ Stage 7 blocked`.
+
+Note: in all looper failure messages for the pattern path, substitute stage 5 (not stage 3) as the `<eval-stage>`. Resume command: `/skill-test --from-stage 5 <pattern-name-or-path>`
+
+On pass: print `✅ Stage 7 passed`.
 
 **Write state**:
 ```json
@@ -237,5 +263,8 @@ Stage summary:
       ⏭️ npx (requires live env, not tested)
 
 Quality verdict: <grade>
+  PASS — all stages pass, eval pass rate ≥ target
+  WARN — all stages pass but doc lint failures or skipped stages present
+  FAIL — any blocking stage failed or pipeline halted
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

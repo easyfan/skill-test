@@ -71,6 +71,7 @@ bash packer/skill-test/scripts/lint-docs.sh <PKG_DIR>
 **Result**:
 - PASS: zero FAIL items (warnings do not count) → proceed to stage 1
 - FAIL: ≥1 FAIL items → **does not block pipeline**, continue to stage 1, flag ⚠️ in final summary
+  On FAIL: immediately print `⚠️ Stage 0.5 Doc Lint: N issue(s) found (non-blocking — pipeline continues)` then list issues.
 
 **Write state**:
 ```json
@@ -80,6 +81,8 @@ bash packer/skill-test/scripts/lint-docs.sh <PKG_DIR>
 ---
 
 ## Stage 1: Triage Gate
+
+Print: `▶ Stage 1 — Triage Gate…`
 
 **Goal**: Filter obviously blocking issues at minimum cost (~5K tokens) before spending on a full committee review.
 
@@ -92,8 +95,8 @@ Follow the instructions in $SKILL_REVIEW_CMD, reviewing <TARGET_PATH> in --quick
 ```
 
 **Result**:
-- Output contains `🟢 Triage passed` → record stage 1 complete (result: pass), proceed to stage 2
-- Output contains `🔴` → record specific issues, prompt user to fix and re-trigger (do not auto-proceed to stage 2):
+- Output contains `🟢 Triage passed` → record stage 1 complete (result: pass), print `✅ Stage 1 passed`, proceed to stage 2
+- Output contains `🔴` → print `⛔ Stage 1 blocked`, record specific issues, prompt user to fix and re-trigger (do not auto-proceed to stage 2):
   ```
   ⛔ Triage found <K> blocking issue(s), pipeline paused.
   Fix the 🔴 items above then re-run /skill-test (or /skill-test --from-stage 1).
@@ -108,6 +111,8 @@ Follow the instructions in $SKILL_REVIEW_CMD, reviewing <TARGET_PATH> in --quick
 
 ## Stage 2: Full Static Review (run-loop)
 
+Print: `▶ Stage 2 — Full Static Review…`
+
 **Goal**: Use the full committee (4 reviewers + Challenger + Reporter) to surface structural design defects. The researcher runs external benchmarking in round 1 only; subsequent rounds skip it.
 
 **Operation (each round)**:
@@ -120,7 +125,7 @@ do not present inter-stage confirmation gates to the user.
 
 Round 1: full mode (with researcher). Round ≥2: use `--regression` to skip researcher and Challenger.
 
-> **Note**: skill-review's protocol includes a Stage 1 confirmation gate for direct interactive use. When called by skill-test as a coordinator, run the full flow non-interactively and summarize at the end; do not surface intermediate gates to the user.
+> **Note**: skill-review's protocol includes a Stage 1 confirmation gate for direct interactive use. When called by skill-test as a coordinator, run the full flow non-interactively (suppressing skill-review's internal gates only) and summarize at the end; the outer skill-test run-loop user fix confirmation between rounds is still required.
 
 **Loop control**:
 
@@ -129,10 +134,15 @@ ROUND=1, MAX_ROUNDS=3
 while ROUND ≤ MAX_ROUNDS:
   run review
   read Stage 1 finding count (CURRENT_COUNT)
-  if CURRENT_COUNT == 0              → exit loop (converged)
+  if CURRENT_COUNT == 0              → exit loop (converged); print "✅ Stage 2 passed"
   if CURRENT_COUNT == previous count → prompt user to decide whether to continue (may have hit ceiling)
-  if ROUND == MAX_ROUNDS             → notify max rounds reached, proceed to next stage
+  if ROUND == MAX_ROUNDS             → notify max rounds reached, print "⚠️ Stage 2 warned (max rounds reached)", proceed to next stage
   wait for user fix confirmation → ROUND++
+```
+
+On exit from Stage 2 loop with non-zero findings, show resume command:
+```
+If you fix the remaining findings, resume with: /skill-test --from-stage 2 <target>
 ```
 
 **Write state**:
@@ -144,15 +154,36 @@ while ROUND ≤ MAX_ROUNDS:
 
 ## Stage 3: Behavioral Eval Main Loop
 
+Print: `▶ Stage 3 — Behavioral Eval…`
+
 **Goal**: Verify that the skill behaves as designed under real user prompts.
 
-**Scope**: Only applies to skills triggered implicitly via `description`. Skills that are explicitly invoked commands skip this stage and proceed directly to stage 4.
+**Scope**: Only applies to skills triggered implicitly via `description`. Skills that use one of the following triggering modes skip this stage and proceed directly to stage 4:
+- 'explicit invocation only'
+- 'slash command only'
+- 'manual invocation only'
+- 'command-only'
+
+If skill-creator is not installed (SKILL_CREATOR_CMD not found), skip stage 3:
+```
+Print: ⏭️ Stage 3 skipped — skill-creator not installed. Proceeding to Stage 4.
+```
+Mark state as "skipped (skill-creator not installed)" and proceed to stage 4.
 
 **Pre-conditions check**:
-1. Check triggering mode: read the `description` field of the target file; if it contains "explicit invocation only" or equivalent → skip stage 3, mark as "skipped (explicit invocation)"
-2. Verify evals.json exists and is valid
+1. Check triggering mode: read the `description` field of the target file; if it matches any of the explicit invocation patterns above → skip stage 3:
+   ```
+   Print: ⏭️ Stage 3 skipped — skill uses explicit invocation only. Proceeding to Stage 4.
+   ```
+   Mark state as "skipped (explicit invocation)" and proceed to stage 4.
+2. Verify evals.json exists and is valid; require minimum 3 eval cases; warn (non-blocking) if no negative or near-miss case is present
 3. Verify SKILL.md exists with front-matter
-4. If any check fails → **BLOCKER**, halt pipeline immediately, provide repair guidance
+4. If evals.json or SKILL.md check fails → **BLOCKER**, halt pipeline immediately, provide repair guidance:
+   ```
+   ⛔ Stage 3 pre-condition failed: <reason>
+   Repair: <specific guidance>
+   After fixing, resume with: /skill-test --from-stage 3 <target>
+   ```
 
 **Operation**:
 
@@ -170,9 +201,9 @@ while EVAL_ROUND ≤ MAX_EVAL_ROUNDS:
   run eval
   if eval execution fails (tool error, format error, etc.) → BLOCKER, halt pipeline
   review results
-  if pass rate meets target (or user satisfied) → exit loop
+  if pass rate meets target (or user satisfied) → exit loop; print "✅ Stage 3 passed"
   if pass rate plateaus for 2 rounds → suggest possible improvement ceiling; review eval quality
-  if EVAL_ROUND == MAX_EVAL_ROUNDS   → notify max rounds reached
+  if EVAL_ROUND == MAX_EVAL_ROUNDS   → notify max rounds reached; print "⚠️ Stage 3 warned (max rounds)"
   improve skill → EVAL_ROUND++
 ```
 
@@ -187,6 +218,8 @@ eval workspace path: `<PROJECT_ROOT>/<skill-name>-workspace/` (sibling to skill 
 
 ## Stage 4: Regression Static Re-check
 
+Print: `▶ Stage 4 — Regression Static Re-check…`
+
 **Goal**: Catch design regressions introduced during eval iteration (the eval loop may restructure the skill).
 
 **Operation**:
@@ -196,8 +229,8 @@ Follow the instructions in $SKILL_REVIEW_CMD, reviewing <TARGET_PATH> in --regre
 ```
 
 **Result**:
-- `[Regression check complete] zero new findings` → record complete (result: pass), proceed to stage 5
-- Findings present → show to user, wait for fix confirmation (no loop here; fix and proceed directly to stage 5)
+- `[Regression check complete] zero new findings` → print `✅ Stage 4 passed`, record complete (result: pass), proceed to stage 5
+- Findings present → print `⚠️ Stage 4 warned`, show to user, wait for fix confirmation (no loop here; fix and proceed directly to stage 5)
 
 **Write state**:
 ```json
@@ -207,6 +240,8 @@ Follow the instructions in $SKILL_REVIEW_CMD, reviewing <TARGET_PATH> in --regre
 ---
 
 ## Stage 5: Looper Deployment Verification
+
+Print: `▶ Stage 5 — Looper Deployment Verification…`
 
 **Goal**: Verify skill trigger accuracy and installation completeness in a clean CC environment. For packer packages, all **container-testable** installation methods must be covered. This is a terminal verifier — no iteration.
 
@@ -256,7 +291,7 @@ Both rounds must pass T1–T5. Any failure makes the overall result FAIL. T5 run
 
 **Non-testable methods**: plugin marketplace and npx are explicitly noted "requires live environment, not tested" in the summary; they do not contribute to FAIL.
 
-**Failure handling**: do not re-run looper; roll back to stage 3.
+**Failure handling**: do not re-run looper; roll back to stage 3. Print `⛔ Stage 5 blocked`.
 
 ```
 ⚠️ looper verification failed
@@ -267,8 +302,10 @@ Failure analysis:
   • Eval suite failure (T5)      → clean-env behavior differs from host; check whether description
                                    depends on other installed skills or host env vars; add eval cases
 
-Recommended: /skill-test --from-stage <eval-stage> <target>
+Recommended: /skill-test --from-stage 3 <target>
 ```
+
+On pass: print `✅ Stage 5 passed`.
 
 **Write state**:
 ```json
@@ -312,5 +349,8 @@ Stage summary:
     eval suite (T5): ✅ <N>/<M> passed  |  ⏭️ skipped (no evals.json)
 
 Quality verdict: <grade>
+  PASS — all stages pass, eval pass rate ≥ target
+  WARN — all stages pass but doc lint failures or skipped stages present
+  FAIL — any blocking stage failed or pipeline halted
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

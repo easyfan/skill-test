@@ -68,35 +68,7 @@ elif [ ! -f "$PLUGIN_JSON" ]; then
   fail ".claude-plugin/plugin.json not found"
 else
   pass "plugin.json exists"
-
-  # Required fields
-  for field in name description install; do
-    grep -q "\"${field}\"" "$PLUGIN_JSON" \
-      && pass "field '${field}' present" \
-      || fail "plugin.json missing required field: '${field}'"
-  done
-
-  # All files in commands/ must be declared in plugin.json
-  if [ -d "$PKG_DIR/commands" ]; then
-    for f in "$PKG_DIR/commands/"*.md; do
-      [ -f "$f" ] || continue
-      cmd=$(basename "$f" .md)
-      grep -q "\"${cmd}\"" "$PLUGIN_JSON" \
-        && pass "commands/${cmd}.md declared in plugin.json" \
-        || fail "commands/${cmd}.md not declared in plugin.json"
-    done
-  fi
-
-  # All files in agents/ must be declared in plugin.json
-  if [ -d "$PKG_DIR/agents" ]; then
-    for f in "$PKG_DIR/agents/"*.md; do
-      [ -f "$f" ] || continue
-      agent=$(basename "$f" .md)
-      grep -q "\"${agent}\"" "$PLUGIN_JSON" \
-        && pass "agents/${agent}.md declared in plugin.json" \
-        || fail "agents/${agent}.md not declared in plugin.json"
-    done
-  fi
+  # Field-level and path-format validation delegated to validate-plugin-manifest skill
 fi
 
 echo ""
