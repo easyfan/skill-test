@@ -52,10 +52,11 @@ CLAUDE_DIR=~/.claude bash install.sh
 
 ```bash
 git clone https://github.com/easyfan/skill-test.git
+cp skill-test/commands/skill-test.md ~/.claude/commands/
 cp -r skill-test/skills/skill-test ~/.claude/skills/
 ```
 
-安装完成后重启 Claude Code 会话，即可通过 `/skill-test` 使用。
+安装完成后重启 Claude Code 会话，即可通过 `/skill-test` 命令使用。
 
 ## 前置依赖
 
@@ -92,12 +93,13 @@ cp -r skill-test/skills/skill-test ~/.claude/skills/
 ## 安装后文件
 
 ```
+~/.claude/commands/skill-test.md     # /skill-test 斜杠命令入口
 ~/.claude/skills/skill-test/
-├── SKILL.md                 # 主协调器 skill
+├── SKILL.md                         # 主协调器 skill
 └── references/
-    ├── skill-pipeline.md    # skill/agent 5+1 阶段详情
-    ├── pattern-pipeline.md  # pattern 7+1 阶段详情
-    └── tools.md             # 工具调用参考
+    ├── skill-pipeline.md            # skill/agent 5+1 阶段详情
+    ├── pattern-pipeline.md          # pattern 7+1 阶段详情
+    └── tools.md                     # 工具调用参考
 ```
 
 ## Eval 套件
@@ -116,6 +118,8 @@ packer/skill-test/
 ├── .claude-plugin/
 │   ├── plugin.json
 │   └── marketplace.json
+├── commands/
+│   └── skill-test.md    # /skill-test 斜杠命令入口
 ├── skills/skill-test/
 │   └── SKILL.md
 ├── references/

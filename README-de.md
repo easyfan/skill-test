@@ -52,10 +52,11 @@ CLAUDE_DIR=~/.claude bash install.sh
 
 ```bash
 git clone https://github.com/easyfan/skill-test.git
+cp skill-test/commands/skill-test.md ~/.claude/commands/
 cp -r skill-test/skills/skill-test ~/.claude/skills/
 ```
 
-Nach der Installation Claude Code neu starten. Der Skill ist als `/skill-test` verfügbar.
+Nach der Installation Claude Code neu starten. Der Befehl ist als `/skill-test` verfügbar.
 
 ## Voraussetzungen
 
@@ -92,12 +93,13 @@ Wenn ein erforderliches Werkzeug nicht installiert ist, überspringt `skill-test
 ## Installierte Dateien
 
 ```
+~/.claude/commands/skill-test.md     # /skill-test Slash-Command-Einstiegspunkt
 ~/.claude/skills/skill-test/
-├── SKILL.md                 # Haupt-Koordinator-Skill
+├── SKILL.md                         # Haupt-Koordinator-Skill
 └── references/
-    ├── skill-pipeline.md    # 5+1-Stufen-Details für Skills/Agents
-    ├── pattern-pipeline.md  # 7+1-Stufen-Details für Patterns
-    └── tools.md             # Werkzeugaufruf-Referenz
+    ├── skill-pipeline.md            # 5+1-Stufen-Details für Skills/Agents
+    ├── pattern-pipeline.md          # 7+1-Stufen-Details für Patterns
+    └── tools.md                     # Werkzeugaufruf-Referenz
 ```
 
 ## Eval-Suite
