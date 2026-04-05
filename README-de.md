@@ -63,11 +63,11 @@ Nach der Installation Claude Code neu starten. Der Skill ist als `/skill-test` v
 
 | Stufe | Erforderliches Werkzeug | Installation |
 |-------|------------------------|--------------|
-| 1, 2, 4 | skill-review | `/plugin install skill-review@latest` |
-| 3, 4 (Pattern) | pattern-review | `/plugin install pattern-review@latest` |
+| 1, 2, 4 | skill-review | `/plugin install skill-review@skill-review` |
+| 3, 4 (Pattern) | pattern-review | `/plugin install pattern-review@pattern-review` |
 | 3 | skill-creator eval | Aus dem skill-creator-Plugin |
-| 3 (Pattern) | patterns | `/plugin install patterns@latest` |
-| 5 | looper | `/plugin install looper@latest` |
+| 3 (Pattern) | patterns | `/plugin install patterns@patterns` |
+| 5 | looper | `/plugin install looper@looper` |
 
 Wenn ein erforderliches Werkzeug nicht installiert ist, überspringt `skill-test` die entsprechende Stufe und gibt eine Warnung aus.
 

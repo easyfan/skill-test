@@ -63,11 +63,11 @@ cp -r skill-test/skills/skill-test ~/.claude/skills/
 
 | 阶段 | 所需工具 | 安装方式 |
 |------|---------|---------|
-| 1, 2, 4 | skill-review | `/plugin install skill-review@latest` |
-| 3, 4（pattern） | pattern-review | `/plugin install pattern-review@latest` |
+| 1, 2, 4 | skill-review | `/plugin install skill-review@skill-review` |
+| 3, 4（pattern） | pattern-review | `/plugin install pattern-review@pattern-review` |
 | 3 | skill-creator eval | skill-creator 插件 |
-| 3（pattern） | patterns | `/plugin install patterns@latest` |
-| 5 | looper | `/plugin install looper@latest` |
+| 3（pattern） | patterns | `/plugin install patterns@patterns` |
+| 5 | looper | `/plugin install looper@looper` |
 
 如果某个工具未安装，`skill-test` 会跳过对应阶段并给出提示。
 

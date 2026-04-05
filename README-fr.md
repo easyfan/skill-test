@@ -63,11 +63,11 @@ Après l'installation, redémarrez votre session Claude Code. Le skill est dispo
 
 | Étape | Outil requis | Installation |
 |-------|-------------|--------------|
-| 1, 2, 4 | skill-review | `/plugin install skill-review@latest` |
-| 3, 4 (pattern) | pattern-review | `/plugin install pattern-review@latest` |
+| 1, 2, 4 | skill-review | `/plugin install skill-review@skill-review` |
+| 3, 4 (pattern) | pattern-review | `/plugin install pattern-review@pattern-review` |
 | 3 | skill-creator eval | Depuis le plugin skill-creator |
-| 3 (pattern) | patterns | `/plugin install patterns@latest` |
-| 5 | looper | `/plugin install looper@latest` |
+| 3 (pattern) | patterns | `/plugin install patterns@patterns` |
+| 5 | looper | `/plugin install looper@looper` |
 
 Si un outil requis n'est pas installé, `skill-test` ignore cette étape et émet un avertissement.
 
