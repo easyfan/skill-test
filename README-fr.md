@@ -27,8 +27,8 @@ Coordinateur de pipeline de test complet pour les skills, agents et patterns Cla
 
 Dans Claude Code :
 ```
-/plugin marketplace add https://github.com/easyfan/skill-test
-/plugin install skill-test@latest
+/plugin marketplace add easyfan/skill-test
+/plugin install skill-test@skill-test
 ```
 
 > Couverture des tests automatisés : looper T2b (Plan B) vérifie le chemin CLI `claude plugin install` sous-jacent ; le point d'entrée REPL `/plugin` doit être vérifié manuellement.

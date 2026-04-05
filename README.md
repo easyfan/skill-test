@@ -27,8 +27,8 @@ Full testing pipeline coordinator for Claude Code skills, agents, and patterns. 
 
 In Claude Code:
 ```
-/plugin marketplace add https://github.com/easyfan/skill-test
-/plugin install skill-test@latest
+/plugin marketplace add easyfan/skill-test
+/plugin install skill-test@skill-test
 ```
 
 > Partially covered by automated tests: underlying `claude plugin install` CLI verified by looper T2b (Plan B); `/plugin` REPL entry point must be verified manually.

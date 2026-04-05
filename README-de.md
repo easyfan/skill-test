@@ -27,8 +27,8 @@ Vollständiger Test-Pipeline-Koordinator für Claude Code Skills, Agents und Pat
 
 In Claude Code:
 ```
-/plugin marketplace add https://github.com/easyfan/skill-test
-/plugin install skill-test@latest
+/plugin marketplace add easyfan/skill-test
+/plugin install skill-test@skill-test
 ```
 
 > Automatisierte Testabdeckung: looper T2b (Plan B) verifiziert den zugrunde liegenden `claude plugin install` CLI-Pfad; der `/plugin` REPL-Einstiegspunkt muss manuell verifiziert werden.

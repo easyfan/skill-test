@@ -27,8 +27,8 @@
 
 В Claude Code:
 ```
-/plugin marketplace add https://github.com/easyfan/skill-test
-/plugin install skill-test@latest
+/plugin marketplace add easyfan/skill-test
+/plugin install skill-test@skill-test
 ```
 
 > Покрытие автоматизированными тестами: looper T2b (Plan B) верифицирует путь CLI `claude plugin install`; точка входа REPL `/plugin` требует ручной проверки.

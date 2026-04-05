@@ -27,8 +27,8 @@ Claude Code skills、agents 和 patterns 的完整测试流水线协调器。将
 
 在 Claude Code 中执行：
 ```
-/plugin marketplace add https://github.com/easyfan/skill-test
-/plugin install skill-test@latest
+/plugin marketplace add easyfan/skill-test
+/plugin install skill-test@skill-test
 ```
 
 > 自动化测试覆盖情况：looper T2b（Plan B）验证底层 `claude plugin install` CLI 路径；`/plugin` REPL 入口需手动验证。
