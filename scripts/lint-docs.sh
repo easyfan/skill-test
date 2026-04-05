@@ -24,7 +24,12 @@ PKG_NAME=$(basename "$PKG_DIR")
 PLUGIN_JSON="$PKG_DIR/.claude-plugin/plugin.json"
 README="$PKG_DIR/README.md"
 INSTALL_SH="$PKG_DIR/install.sh"
-SKILL_MD="$PKG_DIR/SKILL.md"
+# SKILL.md may live under skills/<pkg_name>/SKILL.md (plugin layout) or at package root
+if [ -f "$PKG_DIR/skills/$PKG_NAME/SKILL.md" ]; then
+  SKILL_MD="$PKG_DIR/skills/$PKG_NAME/SKILL.md"
+else
+  SKILL_MD="$PKG_DIR/SKILL.md"
+fi
 PKG_JSON="$PKG_DIR/package.json"
 
 FAIL=0
@@ -187,8 +192,8 @@ echo ""
 #   - Human-facing files (README.md): English-only; README-zh.md is the bilingual partner
 #   - Machine-facing non-semantic files (SKILL.md, install.sh, install.ps1,
 #     package.json, plugin.json): English-only
-#   - Semantic execution files (commands/*.md, agents/*.md): excluded (translation
-#     risk — semantic drift could break Claude behavior)
+#   - Semantic execution files (commands/*.md, agents/*.md, skills/*/SKILL.md):
+#     excluded (translation risk — semantic drift could break Claude behavior)
 echo "L6 language"
 
 HAS_PYTHON3=false
@@ -199,7 +204,7 @@ if [ "$HAS_PYTHON3" = "false" ]; then
 else
   LANG_CHECK_FILES=()
   [ -f "$README" ]              && LANG_CHECK_FILES+=("$README")
-  [ -f "$SKILL_MD" ]            && LANG_CHECK_FILES+=("$SKILL_MD")
+  # SKILL.md excluded — semantic execution file (same as commands/*.md, agents/*.md)
   [ -f "$INSTALL_SH" ]          && LANG_CHECK_FILES+=("$INSTALL_SH")
   [ -f "$PKG_DIR/install.ps1" ] && LANG_CHECK_FILES+=("$PKG_DIR/install.ps1")
   [ -f "$PKG_JSON" ]            && LANG_CHECK_FILES+=("$PKG_JSON")
