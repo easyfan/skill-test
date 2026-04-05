@@ -1,0 +1,27 @@
+{
+  "name": "skill-test",
+  "version": "1.0.0",
+  "description": "Full testing pipeline coordinator for Claude Code skills, agents, and patterns",
+  "author": {
+    "name": "easyfan",
+    "email": "zhengfan@apache.org"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/easyfan/skill-test",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/easyfan/skill-test.git"
+  },
+  "keywords": ["claude-code", "skill", "testing", "pipeline", "eval", "looper", "quality"],
+  "pluginDistribution": false,
+  "files": [
+    "skills/",
+    "references/",
+    "scripts/",
+    "evals/",
+    "install.sh",
+    "README.md",
+    "README-zh.md",
+    "LICENSE"
+  ]
+}

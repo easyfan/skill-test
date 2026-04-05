@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "skill-test",
+  "description": "Full testing pipeline coordinator for Claude Code plugins",
+  "owner": {
+    "name": "easyfan",
+    "email": "zhengfan@apache.org"
+  },
+  "plugins": [
+    {
+      "name": "skill-test",
+      "description": "1 skill (/skill-test). Orchestrates a 5+1 stage pipeline (Triage → static review → behavioral eval → regression → looper) for skills/agents, and a 7+1 stage pipeline for patterns. Supports --from-stage for resuming mid-pipeline.",
+      "category": "workflow",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/easyfan/skill-test.git",
+        "sha": "0000000000000000000000000000000000000000"
+      },
+      "homepage": "https://github.com/easyfan/skill-test"
+    }
+  ]
+}

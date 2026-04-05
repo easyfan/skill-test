@@ -1,0 +1,59 @@
+{
+  "skill_name": "skill-test",
+  "disable_t5": true,
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to run a full quality test on the skill at ~/.claude/commands/patterns.md. Please use skill-test to plan and execute the complete testing pipeline, showing the operation plan for each stage.",
+      "expected_output": "Identifies target as skill/agent type, shows 5-stage pipeline (Triage → full static review → eval main loop → regression re-check → looper), each stage with clear operation description and exit condition.",
+      "files": [],
+      "assertions": [
+        "Output contains 5 distinct stages (not 4 or 6), corresponding to the skill/agent path",
+        "First stage mentions Triage or --quick mode quick scan",
+        "Includes full static review stage, mentioning that researcher runs in round 1 only",
+        "Includes behavioral eval stage, mentioning ≤5 rounds or 5-round loop limit",
+        "Includes regression static re-check stage, mentioning --regression flag",
+        "Includes looper deployment verification stage, describing it as a terminal verifier"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Please use skill-test to generate a complete test plan for the pattern at ~/.claude/patterns/agent-monitoring.md. Include detailed descriptions for all stages.",
+      "expected_output": "Identifies target as pattern type, shows 7-stage pipeline (Triage → template review → settle-down → bridge verification → eval → regression → looper), includes generated-from check and dual-track static description.",
+      "files": [],
+      "assertions": [
+        "Output contains 7 distinct stages (not 5), corresponding to the pattern path",
+        "Includes settle-down or instantiation step (/patterns agent-monitoring)",
+        "After settle-down stage (stage 3), includes a check that verifies the generated-from field exists in the output file, and states that if missing the fix must roll back to the pattern layer (not just fix the instance file)",
+        "Includes instance bridge verification step (skill-review --regression on the instance file)",
+        "Mentions that template-layer defects must roll back to the pattern layer for fixes (not just fix the instance file)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/skill-test --from-stage 3 ~/.claude/commands/patterns.md — static review is complete (stages 1 and 2 passed), now continue from the eval stage. Please show the execution plan starting from stage 3.",
+      "expected_output": "Explicitly skips stages 1 and 2, starts from behavioral eval stage, shows eval loop logic (≤5 rounds), with_skill vs without_skill comparison, and pass rate convergence conditions.",
+      "files": [],
+      "assertions": [
+        "Explicitly states that stage 1 (Triage) and stage 2 (full review) are skipped",
+        "Starts execution from stage 3 (behavioral eval)",
+        "Mentions with_skill and without_skill (or baseline) parallel runs for comparison",
+        "Mentions eval round limit (≤5 rounds)",
+        "Shows plan for subsequent stages (stage 4 regression re-check, stage 5 looper)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The skill-test pipeline reached the final step (looper deployment verification), and the looper report shows the skill has a 0% trigger rate in a clean CC environment — no commands were recognized after installation. What should the next step be?",
+      "expected_output": "Clearly recommends not re-running looper, explains that looper is a terminal verifier not an iteration tool, indicates that looper failure means upstream filtering (eval or description optimization) missed a root cause, recommends rolling back to the eval stage with a specific --from-stage command.",
+      "files": [],
+      "assertions": [
+        "Clearly recommends NOT re-running looper",
+        "Explains that looper is a terminal verifier, not an iteration tool",
+        "Recommends rolling back to the eval stage (not description optimization or other stages)",
+        "Provides a specific --from-stage command or equivalent recommendation",
+        "Analyzes possible root causes for 0% trigger rate (description field, description optimization not converged, etc.)"
+      ]
+    }
+  ]
+}

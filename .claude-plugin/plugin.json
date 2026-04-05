@@ -1,0 +1,14 @@
+{
+  "name": "skill-test",
+  "version": "1.0.0",
+  "description": "Full testing pipeline coordinator for skills, agents, and patterns. Orchestrates static review, behavioral eval, and deployment verification.",
+  "author": {
+    "name": "easyfan",
+    "email": "zhengfan@apache.org"
+  },
+  "homepage": "https://github.com/easyfan/skill-test",
+  "repository": "https://github.com/easyfan/skill-test",
+  "license": "MIT",
+  "keywords": ["testing", "pipeline", "skill", "eval", "looper", "quality"],
+  "install": "bash install.sh"
+}
