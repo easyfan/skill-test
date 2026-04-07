@@ -74,6 +74,12 @@ elif [ ! -f "$PLUGIN_JSON" ]; then
 else
   pass "plugin.json exists"
   # Field-level and path-format validation delegated to validate-plugin-manifest skill
+  grep -q '"version"' "$PLUGIN_JSON" \
+    && pass "plugin.json has version field (required for version-based cache path)" \
+    || fail "plugin.json missing version field — CC falls back to SHA-based cache path, triggers ENAMETOOLONG on install"
+  grep -q '"homepage"' "$PLUGIN_JSON" \
+    && pass "plugin.json has homepage field" \
+    || warn "plugin.json missing homepage field (recommended)"
 fi
 
 echo ""
