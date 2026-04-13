@@ -165,7 +165,7 @@ echo ""
 echo "L5 evals"
 EVALS_JSON="$PKG_DIR/evals/evals.json"
 if [ ! -f "$EVALS_JSON" ]; then
-  warn "evals/evals.json not found (recommended: add trigger-accuracy test cases)"
+  fail "evals/evals.json not found — T5 eval suite cannot run without test cases; plugin cannot reach publish-ready status"
 else
   pass "evals/evals.json exists"
 
